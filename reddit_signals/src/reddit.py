@@ -89,14 +89,15 @@ def get_submission_data(submission, comment_sort="top", comment_limit=10):
 
     print("Getting entities for the title...")
     huggingface_entities = get_huggingface_response(submission_title, NER_MODEL_ID)
-    entities = defaultdict(list)
-    for entity in huggingface_entities:
-        if entity["entity_group"] == "ORG" and entity["score"] >= NER_ENTITY_THRESHOLD:
-            entities["organization"].append(entity["word"])
-        if entity["entity_group"] == "PER" and entity["score"] >= NER_ENTITY_THRESHOLD:
-            entities["persion"].append(entity["word"])
-        if entity["entity_group"] == "LOC" and entity["score"] >= NER_ENTITY_THRESHOLD:
-            entities["location"].append(entity["word"])
+    if isinstance(huggingface_entities, list):
+        entities = defaultdict(list)
+        for entity in huggingface_entities:
+            if entity["entity_group"] == "ORG" and entity["score"] >= NER_ENTITY_THRESHOLD:
+                entities["organization"].append(entity["word"])
+            if entity["entity_group"] == "PER" and entity["score"] >= NER_ENTITY_THRESHOLD:
+                entities["persion"].append(entity["word"])
+            if entity["entity_group"] == "LOC" and entity["score"] >= NER_ENTITY_THRESHOLD:
+                entities["location"].append(entity["word"])
 
     entities = dict(entities)
     if len(entities) == 0:
@@ -139,9 +140,11 @@ def get_submission_data(submission, comment_sort="top", comment_limit=10):
     top_level_comments = get_comments(
         submission=submission, comment_sort=comment_sort, comment_limit=comment_limit
     )
-    comments_emotion_counter = {}
+    comments_emotion_counter, comments = {}, []
     for top_level_comment in top_level_comments:
         comment = top_level_comment.body
+        comments.append(comment)
+
         comment_emotion = get_huggingface_response(comment, EMOTION_MODEL_ID)
 
         if isinstance(comment_emotion, list):
@@ -153,6 +156,7 @@ def get_submission_data(submission, comment_sort="top", comment_limit=10):
                     comments_emotion_counter.get(comment_emotion_prediction, 0) + 1
                 )
 
+    submission_data["comments"] = " ||> ".join(comments)
     submission_data["comments_emotion_counter"] = comments_emotion_counter
 
     return submission_data

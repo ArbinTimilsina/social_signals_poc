@@ -26,7 +26,6 @@ subnets_list = reddit_signals_ecs["subnets_list"]
 task_definition = reddit_signals_ecs["task_definition"]
 task_concurrency = reddit_signals_ecs["task_concurrency"]
 ecs_container_name = reddit_signals_ecs["ecs_container_name"]
-aws_logs_group = reddit_signals_ecs["aws_logs_group"]
 
 
 def set_reddit_signals_config():
@@ -35,7 +34,7 @@ def set_reddit_signals_config():
         "reddit_id": reddit_id,
         "reddit_secret": reddit_secret,
         "reddit_username": reddit_username,
-        "reddit_password": reddit_password,
+        "reddit_password": reddit_password
     }
 
     return reddit_signals_config
@@ -62,7 +61,7 @@ def create_dag():
     return DAG(
         dag_id=dag_id,
         default_args=default_args,
-        start_date=datetime(2023, 5, 10, 2, 0, 0),
+        start_date=datetime(2023, 5, 12, 2, 0, 0),
         schedule_interval="0 8 * * *",
         concurrency=10,
         max_active_runs=1,
@@ -78,7 +77,6 @@ def get_ecs_operator(
     ecs_container_name,
     cluster,
     subnets_list,
-    awslogs_group,
     dag,
 ):
     task_ecs = EcsRunTaskOperator(
@@ -103,7 +101,6 @@ def get_ecs_operator(
                 "subnets": subnets_list,
             },
         },
-        awslogs_group=awslogs_group,
         task_concurrency=task_concurrency,
         dag=dag,
     )
@@ -122,7 +119,6 @@ reddit_signals_task = get_ecs_operator(
     ecs_container_name=ecs_container_name,
     cluster=cluster,
     subnets_list=subnets_list,
-    awslogs_group=aws_logs_group,
     dag=dag,
 )
 
