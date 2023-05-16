@@ -10,4 +10,3 @@ ADD ./src /src
 WORKDIR /src
 RUN pip install -r requirements.txt
 ENTRYPOINT [ "python3" ]
-CMD [ "entry_reddit_signals.py" ]

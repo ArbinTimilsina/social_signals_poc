@@ -4,8 +4,6 @@ from datetime import datetime
 import pandas as pd
 from reddit import get_submission_data, get_top_submissions
 
-reddit_signals_config = eval(os.environ["config"])
-
 SUBMISSION_TIME_FILTER = "day"
 SUBMISSION_LIMIT = 25
 COMMENT_SORT = "top"
@@ -34,7 +32,7 @@ def get_subreddit_data(year, month, day, subreddit):
     print(f"Shape of the final dataframe is {df.shape}")
 
     output_path = (
-        f"s3://social-signals-dev-data/reddit/year={year}/month={month}/day={day}/reddit.csv"
+        f"s3://social-signals-dev-data/reddit/year={year}/month={month}/day={day}/{subreddit}.csv"
     )
     print(f"Writing output to {output_path}")
 
@@ -52,7 +50,10 @@ def main():
     month = given_date.strftime("%m")
     day = given_date.strftime("%d")
 
-    get_subreddit_data(year, month, day)
+    config = eval(os.environ["config"])
+    subreddit = str(config["subreddit"])
+
+    get_subreddit_data(year, month, day, subreddit)
     print(f"Finished getting Reddit data for year {year}, month: {month} , day={day}")
 
 

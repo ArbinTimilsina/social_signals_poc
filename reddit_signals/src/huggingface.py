@@ -1,8 +1,8 @@
 import os
 import requests
 
-reddit_signals_config = eval(os.environ["config"])
-HUGGINGFACE_TOKEN = reddit_signals_config["huggingface_token"]
+config = eval(os.environ["config"])
+HUGGINGFACE_TOKEN = config["huggingface_token"]
 
 NER_MODEL_ID = "dslim/bert-large-NER"
 SENTIMENT_MODEL_ID = "cardiffnlp/twitter-roberta-base-sentiment-latest"

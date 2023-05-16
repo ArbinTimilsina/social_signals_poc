@@ -1,5 +1,6 @@
 import os
 from collections import defaultdict
+import json
 
 import praw
 from huggingface import (
@@ -10,15 +11,16 @@ from huggingface import (
     get_huggingface_response,
 )
 
-reddit_signals_config = eval(os.environ["config"])
-REDDIT_ID = reddit_signals_config["reddit_id"]
-REDDIT_SECRET = reddit_signals_config["reddit_secret"]
-REDDIT_USERNAME = reddit_signals_config["reddit_username"]
-REDDIT_PASSWORD = reddit_signals_config["reddit_password"]
+config = eval(os.environ["config"])
+REDDIT_ID = config["reddit_id"]
+REDDIT_SECRET = config["reddit_secret"]
+REDDIT_USERNAME = config["reddit_username"]
+REDDIT_PASSWORD = config["reddit_password"]
 
 NER_ENTITY_THRESHOLD = 0.75
 EMOTION_THRESHOLD = 0.75
 
+COMMENTS_SPLITTER = " ||> "
 
 def get_reddit():
     reddit = praw.Reddit(
@@ -75,6 +77,9 @@ def get_submission_data(submission, comment_sort="top", comment_limit=10):
     submission_subreddit = submission.subreddit
     submission_data["submission_subreddit"] = submission_subreddit
 
+    subreddit_subscribers = submission.subscribers
+    submission_data["subreddit_subscribers"] = subreddit_subscribers
+
     submission_title = submission.title
     submission_data["submission_title"] = submission_title
     print(f"Submission title: {submission_title}")
@@ -82,10 +87,6 @@ def get_submission_data(submission, comment_sort="top", comment_limit=10):
     submission_score = submission.score
     submission_data["submission_score"] = submission_score
     print(f"Submission score: {submission_score}")
-
-    submission_num_comments = submission.num_comments
-    submission_data["submission_num_comments"] = submission_num_comments
-    print(f"Submission no. comments: {submission_num_comments}")
 
     print("Getting entities for the title...")
     huggingface_entities = get_huggingface_response(submission_title, NER_MODEL_ID)
@@ -95,7 +96,7 @@ def get_submission_data(submission, comment_sort="top", comment_limit=10):
             if entity["entity_group"] == "ORG" and entity["score"] >= NER_ENTITY_THRESHOLD:
                 entities["organization"].append(entity["word"])
             if entity["entity_group"] == "PER" and entity["score"] >= NER_ENTITY_THRESHOLD:
-                entities["persion"].append(entity["word"])
+                entities["person"].append(entity["word"])
             if entity["entity_group"] == "LOC" and entity["score"] >= NER_ENTITY_THRESHOLD:
                 entities["location"].append(entity["word"])
 
@@ -103,7 +104,7 @@ def get_submission_data(submission, comment_sort="top", comment_limit=10):
     if len(entities) == 0:
         print("Expected entities not found. Quitting...")
         return
-    submission_data["entities"] = entities
+    submission_data["entities"] = json.dumps(entities, sort_keys=True)
 
     print("Getting sentiment for the title...")
     title_sentiment = get_huggingface_response(submission_title, SENTIMENT_MODEL_ID)
@@ -136,6 +137,10 @@ def get_submission_data(submission, comment_sort="top", comment_limit=10):
         ] = title_esg_categories_prediction
         submission_data["title_esg_categories_score"] = title_esg_categories_score
 
+    submission_num_comments = submission.num_comments
+    submission_data["submission_num_comments"] = submission_num_comments
+    print(f"No. of comments: {submission_num_comments}")
+
     print("Going over comments...")
     top_level_comments = get_comments(
         submission=submission, comment_sort=comment_sort, comment_limit=comment_limit
@@ -156,7 +161,7 @@ def get_submission_data(submission, comment_sort="top", comment_limit=10):
                     comments_emotion_counter.get(comment_emotion_prediction, 0) + 1
                 )
 
-    submission_data["comments"] = " ||> ".join(comments)
-    submission_data["comments_emotion_counter"] = comments_emotion_counter
+    submission_data["comments"] = COMMENTS_SPLITTER.join(comments)
+    submission_data["comments_emotion_counter"] = json.dumps(comments_emotion_counter, sort_keys=True)
 
     return submission_data
