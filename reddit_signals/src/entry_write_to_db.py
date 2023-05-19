@@ -9,8 +9,12 @@ from tools import get_engine
 
 
 def get_submission_data(year, month, day, df, entity, top_n=3):
-    df = df[df[entity] != NONE_FILLER]
-    for _, row in df.head(n=top_n).iterrows():
+    print(f"Processing entity {entity}")
+    df_entity = df[df[entity] != NONE_FILLER]
+    print(f"Shape of the df is {df_entity.shape}")
+
+    submission_data_list = []
+    for _, row in df_entity.head(n=top_n).iterrows():
         submission_id = row["submission_id"]
         submission_title = row["submission_title"]
         submission_data = process_submission_data(
@@ -31,29 +35,34 @@ def get_submission_data(year, month, day, df, entity, top_n=3):
         entities = row[entity]
         submission_data["tags"] = entities
 
-        return submission_data
+        submission_data_list.append(submission_data)
+    return submission_data_list
 
 
 def get_data_and_write_to_db(year, month, day):
     input_path = f"s3://social-signals-dev-data/reddit/year={year}/month={month}/day={day}/combined.csv"
     df = pd.read_csv(input_path)
+    print(f"Shape of the combined df is {df.shape}")
 
     entities = ["organization", "person", "location"]
-    for entity in entities:
-        submission_data = get_submission_data(year, month, day, df, entity=entity)
+    for entity in entities:        
+        submission_data_list = get_submission_data(year, month, day, df, entity=entity)
 
-        db_df = pd.DataFrame(data=[submission_data])
-        engine = get_engine()
-        connection = create_engine(engine, pool_pre_ping=True)
+        for submission_data in submission_data_list:
+            db_df = pd.DataFrame(data=[submission_data])
+            print(f"Writing df of shape {db_df.shape} to the DB")
 
-        db_df.to_sql(
-            name=TABLE_NAME,
-            con=connection,
-            schema=SCHEMA,
-            if_exists="append",
-            index=False,
-            method="multi",
-        )
+            engine = get_engine()
+            connection = create_engine(engine, pool_pre_ping=True)
+
+            db_df.to_sql(
+                name=TABLE_NAME,
+                con=connection,
+                schema=SCHEMA,
+                if_exists="append",
+                index=False,
+                method="multi",
+            )
 
 
 def main():
