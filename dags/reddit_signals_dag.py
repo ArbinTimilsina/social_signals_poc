@@ -1,20 +1,24 @@
 from datetime import datetime, timedelta
 
 from airflow import DAG
-from airflow.providers.amazon.aws.operators.ecs import EcsRunTaskOperator
 from airflow.models import Variable
 from airflow.operators.dummy import DummyOperator
+from airflow.providers.amazon.aws.operators.ecs import EcsRunTaskOperator
 
 version = "1.0"
 dag_id = f"reddit_signals_version_{version}"
 
 # Subreddits
-subreddits = Variable.get("subreddits", deserialize_json=True)
-subreddits = subreddits["subreddits"]
+subreddits_info = Variable.get("subreddits_info", deserialize_json=True)
+subreddit_list = subreddits_info["subreddit_list"]
 
 # Secret Huggingface info
 secret_huggingface_info = Variable.get("secret_huggingface_info", deserialize_json=True)
 huggingface_token = secret_huggingface_info["token"]
+
+# Secret OpenAI info
+secret_opeinai_info = Variable.get("secret_opeinai_info", deserialize_json=True)
+openai_key = secret_opeinai_info["key"]
 
 # Secret Reddit info
 secret_reddit_info = Variable.get("secret_reddit_info", deserialize_json=True)
@@ -23,12 +27,19 @@ reddit_secret = secret_reddit_info["reddit_secret"]
 reddit_username = secret_reddit_info["reddit_username"]
 reddit_password = secret_reddit_info["reddit_password"]
 
+# Secret DB info
+secret_db_info = Variable.get("secret_db_info", deserialize_json=True)
+db_username = secret_db_info["db_username"]
+db_password = secret_db_info["db_password"]
+db_host = secret_db_info["db_host"]
+db_port = secret_db_info["db_port"]
+db_name = secret_db_info["db_name"]
+
 # ECS variables
 reddit_signals_ecs = Variable.get("reddit_signals_ecs", deserialize_json=True)
 cluster = reddit_signals_ecs["cluster"]
 subnets_list = reddit_signals_ecs["subnets_list"]
 task_definition = reddit_signals_ecs["task_definition"]
-task_concurrency = reddit_signals_ecs["task_concurrency"]
 ecs_container_name = reddit_signals_ecs["ecs_container_name"]
 
 
@@ -36,10 +47,16 @@ def set_config(subreddit):
     config = {
         "subreddit": subreddit,
         "huggingface_token": huggingface_token,
+        "openai_key": openai_key,
         "reddit_id": reddit_id,
         "reddit_secret": reddit_secret,
         "reddit_username": reddit_username,
         "reddit_password": reddit_password,
+        "db_username": db_username,
+        "db_password": db_password,
+        "db_host": db_host,
+        "db_port": db_port,
+        "db_name": db_name,
     }
     return config
 
@@ -65,9 +82,10 @@ def create_dag():
     return DAG(
         dag_id=dag_id,
         default_args=default_args,
-        start_date=datetime(2023, 5, 15, 2, 0, 0),
+        start_date=datetime(2023, 5, 17, 2, 0, 0),
         schedule_interval="0 8 * * *",
-        concurrency=10,
+        catchup=False,
+        concurrency=5,
         max_active_runs=1,
     )
 
@@ -77,7 +95,6 @@ def get_ecs_operator(
     config,
     task_id,
     task_definition,
-    task_concurrency,
     ecs_container_name,
     cluster,
     subnets_list,
@@ -105,7 +122,6 @@ def get_ecs_operator(
                 "subnets": subnets_list,
             },
         },
-        task_concurrency=task_concurrency,
         dag=dag,
     )
 
@@ -114,20 +130,42 @@ def get_ecs_operator(
 
 dag = create_dag()
 start_task = DummyOperator(task_id="start_task", dag=dag)
-end_task = DummyOperator(task_id="end_task", dag=dag)
 
-for subreddit in subreddits:
+combined_data_task = get_ecs_operator(
+    entry_file="entry_get_combined_data.py",
+    config=str(set_config("None")),
+    task_id="reddit_signals_task",
+    task_definition=task_definition,
+    ecs_container_name=ecs_container_name,
+    cluster=cluster,
+    subnets_list=subnets_list,
+    dag=dag,
+)
+
+for subreddit in subreddit_list:
     subreddit_task = f"subreddit_task_{subreddit}"
     subreddit_task = get_ecs_operator(
-        entry_file="entry_subreddit_data.py",
+        entry_file="entry_get_subreddit_data.py",
         config=str(set_config(subreddit)),
-        task_id=f"subreddit_signals_{subreddit}",
+        task_id=f"subreddit_{subreddit}_signals_task",
         task_definition=task_definition,
-        task_concurrency=task_concurrency,
         ecs_container_name=ecs_container_name,
         cluster=cluster,
         subnets_list=subnets_list,
         dag=dag,
     )
     start_task.set_downstream(subreddit_task)
-    subreddit_task.set_downstream(end_task)
+    subreddit_task.set_downstream(combined_data_task)
+
+write_to_db_task = get_ecs_operator(
+    entry_file="entry_write_to_db.py",
+    config=str(set_config("None")),
+    task_id="write_to_db_task",
+    task_definition=task_definition,
+    ecs_container_name=ecs_container_name,
+    cluster=cluster,
+    subnets_list=subnets_list,
+    dag=dag,
+)
+
+combined_data_task.set_downstream(write_to_db_task)
