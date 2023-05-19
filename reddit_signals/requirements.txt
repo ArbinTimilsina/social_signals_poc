@@ -6,4 +6,4 @@ s3fs==0.4.2
 scikit-learn==1.2.2
 openai==0.27.6
 sqlalchemy==1.4.23
-mysql-connector==2.2.9
+pymysql==1.0.3
