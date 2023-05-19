@@ -1,6 +1,7 @@
 import os
 
 import openai
+from constants import NONE_FILLER
 
 config = eval(os.environ["config"])
 openai.api_key = config["openai_key"]
@@ -8,7 +9,7 @@ openai.api_key = config["openai_key"]
 
 def get_openai_summary(text):
     prompt = f"{text} \n\nTl;dr"
-
+    
     try:
         response = openai.Completion.create(
             model="text-davinci-003",
@@ -21,5 +22,6 @@ def get_openai_summary(text):
         )
     except Exception:
         print("Could not get OpenAI response")
-        return
+        return NONE_FILLER
+
     return response["choices"][0]["text"]

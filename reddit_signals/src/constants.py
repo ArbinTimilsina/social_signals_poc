@@ -12,7 +12,7 @@ COMMENT_LIMIT = 15
 
 # For DB
 SCHEMA = "social_signals_dev"
-TABLE_NAME = "social_signals_pos"
+TABLE_NAME = "social_signals_poc"
 
 CLASSIFICATION_THRESHOLD = 0.75
 NONE_FILLER = "000"

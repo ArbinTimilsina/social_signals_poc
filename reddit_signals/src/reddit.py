@@ -1,4 +1,3 @@
-import json
 import os
 
 import praw
@@ -9,7 +8,7 @@ from huggingface import (
     NER_MODEL_ID,
     get_huggingface_response,
 )
-from openai import get_openai_summary
+from open_ai import get_openai_summary
 
 config = eval(os.environ["config"])
 REDDIT_ID = config["reddit_id"]
