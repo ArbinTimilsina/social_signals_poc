@@ -23,7 +23,7 @@ def get_submission_data(year, month, day, df, entity, top_n=3):
             comment_sort=COMMENT_SORT,
             comment_limit=COMMENT_LIMIT,
         )
-        submission_data["bucket"] = entity
+        submission_data["bucket"] = entity.capitalize()
         submission_data["year"] = year
         submission_data["day"] = day
         submission_data["month"] = month
