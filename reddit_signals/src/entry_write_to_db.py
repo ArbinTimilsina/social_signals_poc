@@ -10,7 +10,7 @@ from tools import get_engine
 
 def get_submission_data(year, month, day, df, entity, top_n=3):
     print(f"Processing entity {entity}")
-    df_entity = df[df[entity] != NONE_FILLER]
+    df_entity = df[(df[entity] != NONE_FILLER) & (df["comments_summary"] != NONE_FILLER)] 
     print(f"Shape of the df is {df_entity.shape}")
 
     submission_data_list = []
