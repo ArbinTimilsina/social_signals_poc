@@ -78,12 +78,12 @@ def create_dag():
         "end_date": None,
     }
 
-    # Run daily at 8 UTC ==> 4 AM ET
+    # Run daily at 6 AM, 12 PM, and 6 PM ET
     return DAG(
         dag_id=dag_id,
         default_args=default_args,
         start_date=datetime(2023, 5, 17, 2, 0, 0),
-        schedule_interval="0 8 * * *",
+        schedule_interval="0 10,16,22 * * *",
         catchup=False,
         concurrency=5,
         max_active_runs=1,
@@ -123,6 +123,7 @@ def get_ecs_operator(
             },
         },
         dag=dag,
+        awslogs_group="/ecs/social-signals-dev-task-definition"
     )
 
     return task_ecs

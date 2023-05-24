@@ -168,16 +168,16 @@ def process_submission_data(
             comment_emotion_prediction = comment_emotion[0][0]["label"]
             comment_emotion_score = comment_emotion[0][0]["score"]
             comment_emotion_score = round(comment_emotion_score, 2)
-            if comment_emotion_score >= CLASSIFICATION_THRESHOLD:
-                comments_emotion_counter[comment_emotion_prediction] = (
-                    comments_emotion_counter.get(comment_emotion_prediction, 0) + 1
-                )
+            comments_emotion_counter[comment_emotion_prediction] = (
+                comments_emotion_counter.get(comment_emotion_prediction, 0) + 1
+            )
+
     if comments_emotion_counter:
         submission_data["comments_emotion"] = max(
             comments_emotion_counter, key=comments_emotion_counter.get
         )
     else:
-        submission_data["comments_emotion"] = NONE_FILLER
+        submission_data["comments_emotion"] = "neutral"
 
     if comments:
         summary_text = " ".join(comments)
