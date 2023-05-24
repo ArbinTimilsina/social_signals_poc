@@ -46,7 +46,7 @@ def main():
     config = eval(os.environ["config"])
     subreddit = str(config["subreddit"])
 
-    get_subreddit_data(year, month, day, subreddit, time)
+    get_subreddit_data(year, month, day, time, subreddit)
     print(
         f"Finished getting subreddit data for year {year}, month {month}, day={day}, and time={time}"
     )

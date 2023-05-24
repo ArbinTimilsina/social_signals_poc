@@ -112,7 +112,7 @@ def get_ecs_operator(
                     "command": [entry_file],
                     "environment": [
                         {"name": "config", "value": str(config)},
-                        {"name": "execution_date", "value": "{}".format("{{ds}}")},
+                        {"name": "execution_date", "value": "{}".format("{{ts}}")},
                     ],
                 },
             ],

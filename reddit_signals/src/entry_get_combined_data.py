@@ -41,7 +41,7 @@ def get_combined_data(year, month, day, time):
     )
 
     df = df.sort_values(by=["social_signals_rank"], ascending=False)
-    output_path = f"s3://social-signals-dev-data/reddit/year={year}/month={month}/day={day}/combined.csv"
+    output_path = f"s3://social-signals-dev-data/reddit/year={year}/month={month}/day={day}/time={time}/combined.csv"
     print(f"Writing output to {output_path}")
 
     df.to_csv(output_path, index=False)
