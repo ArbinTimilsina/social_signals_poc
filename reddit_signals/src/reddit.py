@@ -9,6 +9,7 @@ from huggingface import (
     get_huggingface_response,
 )
 from open_ai import get_openai_summary
+from praw.models import MoreComments
 
 config = eval(os.environ["config"])
 REDDIT_ID = config["reddit_id"]
@@ -45,13 +46,12 @@ def get_top_submissions(subreddit_name, time_filter="day", limit=10):
     return subreddit, top_submissions
 
 
-def get_comments(submission, comment_sort="top", comment_limit=10):
+def get_comments(submission, comment_sort="top"):
     """
     comment_sort: Can be one of: "confidence", "controversial", "new", "old", "q&a", and "top"
     """
     # Calling replace_more() access comments, and so must be done after comment_sort is updated
     submission.comment_sort = comment_sort
-    submission.comment_limit = comment_limit
 
     # Remove comments like "load more comments”, and “continue this thread”
     submission.comments.replace_more(limit=0)
@@ -154,14 +154,14 @@ def process_submission_data(
             submission_data["categories"] = title_esg_categories_prediction
 
     print("Going over comments...")
-    top_level_comments = get_comments(
-        submission=submission, comment_sort=comment_sort, comment_limit=comment_limit
-    )
+    comment_count = 0
+    top_level_comments = get_comments(submission=submission, comment_sort=comment_sort)
     comments_emotion_counter, comments = {}, []
     for top_level_comment in top_level_comments:
-        comment = top_level_comment.body
-        comments.append(comment)
+        if isinstance(top_level_comment, MoreComments):
+            continue
 
+        comment = top_level_comment.body
         comment_emotion = get_huggingface_response(comment, EMOTION_MODEL_ID)
 
         if isinstance(comment_emotion, list):
@@ -176,6 +176,22 @@ def process_submission_data(
             comments_emotion_counter[comment_emotion_prediction] = (
                 comments_emotion_counter.get(comment_emotion_prediction, 0) + 1
             )
+
+        # We don't want stickied comments- mostly from Mods
+        if top_level_comment.stickied:
+            print("Found stickied comment; skipping...")
+            continue
+
+        # We don't want comments from bots
+        comment_author = top_level_comment.author.name
+        if "bot" in comment_author.lower():
+            print(f"Found comment from bot {comment_author}; skipping...")
+            continue
+
+        comments.append(comment)
+        comment_count += 1
+        if comment_count == comment_limit:
+            break
     print(f"Found {len(comments)} comments")
 
     if comments_emotion_counter:
@@ -192,5 +208,7 @@ def process_submission_data(
         submission_data["comments_summary"] = summary
     else:
         submission_data["comments_summary"] = NONE_FILLER
+    
+    submission_data["comments"] = "==>".join(comments)
 
     return submission_data
