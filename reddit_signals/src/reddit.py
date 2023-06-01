@@ -166,11 +166,17 @@ def process_submission_data(
 
         if isinstance(comment_emotion, list):
             comment_emotion_prediction = comment_emotion[0][0]["label"]
+
+            # Neutral is abundant and not interesting
+            if comment_emotion_prediction == "neutral":
+                continue
+
             comment_emotion_score = comment_emotion[0][0]["score"]
             comment_emotion_score = round(comment_emotion_score, 2)
             comments_emotion_counter[comment_emotion_prediction] = (
                 comments_emotion_counter.get(comment_emotion_prediction, 0) + 1
             )
+    print(f"Found {len(comments)} comments")
 
     if comments_emotion_counter:
         submission_data["comments_emotion"] = max(

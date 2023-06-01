@@ -71,7 +71,8 @@ def create_dag():
     default_args = {
         "owner": "admin",
         "depends_on_past": False,
-        "email_on_failure": False,
+        'email': ["arbin.timilsina@gmail.com"],
+        "email_on_failure": True,
         "email_on_retry": False,
         "retries": retries,
         "retry_delay": timedelta(minutes=retry_delay_minutes),
