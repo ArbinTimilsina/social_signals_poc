@@ -209,6 +209,4 @@ def process_submission_data(
     else:
         submission_data["comments_summary"] = NONE_FILLER
     
-    submission_data["comments"] = "==>".join(comments)
-
     return submission_data
