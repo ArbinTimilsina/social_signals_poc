@@ -36,12 +36,12 @@ def get_subreddit(subreddit_name):
     return subreddit
 
 
-def get_top_submissions(subreddit_name, time_filter="day", limit=10):
+def get_top_submissions(subreddit_name, time_filter="day"):
     """
     time_filter: Can be one of: "all", "day", "hour", "month", "week", or "year"
     """
     subreddit = get_subreddit(subreddit_name)
-    top_submissions = subreddit.top(time_filter=time_filter, limit=limit)
+    top_submissions = subreddit.top(time_filter=time_filter)
 
     return subreddit, top_submissions
 

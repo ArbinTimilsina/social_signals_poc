@@ -7,14 +7,13 @@ from reddit import get_submission_data, get_top_submissions
 
 
 def get_subreddit_data(year, month, day, time, subreddit_name):
-    results = []
     print(f"Subreddit is {subreddit_name}")
 
     subreddit, top_submissions = get_top_submissions(
-        subreddit_name=subreddit_name,
-        time_filter=SUBMISSION_TIME_FILTER,
-        limit=SUBMISSION_LIMIT,
+        subreddit_name=subreddit_name, time_filter=SUBMISSION_TIME_FILTER
     )
+
+    results = []
     for i, submission in enumerate(top_submissions):
         print(f"Getting data for submission no. {i}")
         submission_data = get_submission_data(
@@ -22,6 +21,8 @@ def get_subreddit_data(year, month, day, time, subreddit_name):
         )
         if submission_data:
             results.append(submission_data)
+        if len(results) == SUBMISSION_LIMIT:
+            break
     df = pd.DataFrame(results)
     print(f"Shape of the final dataframe is {df.shape}")
 
