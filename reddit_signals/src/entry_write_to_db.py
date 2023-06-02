@@ -2,20 +2,31 @@ import os
 from datetime import datetime
 
 import pandas as pd
-from constants import COMMENT_LIMIT, COMMENT_SORT, SCHEMA, TABLE_NAME
-from reddit import NONE_FILLER, process_submission_data
+from constants import (
+    CATEGORIES,
+    COMMENT_LIMIT,
+    COMMENT_SORT,
+    ENTITIES,
+    NONE_FILLER,
+    SCHEMA,
+    TABLE_NAME,
+)
+from reddit import process_submission_data
 from sqlalchemy import create_engine
 from tools import get_engine
 
 
-def filter_submission_data(year, month, day, time, df, submission_ids, entity, top_n=3):
-    print(f"Processing entity {entity}")
-    df_entity = df[df[entity] != NONE_FILLER]
-    print(f"Shape of the df is {df_entity.shape}")
+def filter_submission_data(
+    year, month, day, time, df, submission_ids, entity, category, top_n=3
+):
+    print(f"Processing entity {entity} and category {category}")
+
+    df = df[(df[entity] != NONE_FILLER) & (df["categories"] == category)]
+    print(f"Shape of the df is {df.shape}")
 
     submission_data_list = []
     count = 0
-    for _, row in df_entity.iterrows():
+    for _, row in df.iterrows():
         submission_id = row["submission_id"]
         submission_title = row["submission_title"]
         submission_data = process_submission_data(
@@ -58,12 +69,19 @@ def get_data_and_write_to_db(year, month, day, time):
     df = pd.read_csv(input_path)
     print(f"Shape of the combined df is {df.shape}")
 
-    entities = ["organization", "person", "location"]
     submission_ids = []
-    for entity in entities:
-        submission_data_list = filter_submission_data(
-            year, month, day, time, df, submission_ids, entity=entity
-        )
+    for entity in ENTITIES:
+        for category in CATEGORIES:
+            submission_data_list = filter_submission_data(
+                year,
+                month,
+                day,
+                time,
+                df,
+                submission_ids,
+                entity=entity,
+                category=category,
+            )
 
         for submission_data in submission_data_list:
             db_df = pd.DataFrame(data=[submission_data])

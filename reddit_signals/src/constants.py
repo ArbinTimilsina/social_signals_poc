@@ -14,5 +14,25 @@ COMMENT_LIMIT = 15
 SCHEMA = "social_signals_dev"
 TABLE_NAME = "social_signals_poc"
 
-CLASSIFICATION_THRESHOLD = 0.75
+CLASSIFICATION_THRESHOLD = 0.60
 NONE_FILLER = "0"
+
+# Entities
+ENTITIES = ["organization", "person", "location"]
+
+# For categories
+CATEGORIES = [
+    "News",
+    "Politics",
+    "Science",
+    "Technology",
+    "Sports",
+    "Movies",
+    "Television",
+    "Entertainment",
+    "Education",
+    "Health",
+    "Music",
+    "Finance",
+    "Miscellaneous",
+]

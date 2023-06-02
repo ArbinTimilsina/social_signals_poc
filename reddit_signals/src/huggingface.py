@@ -1,6 +1,7 @@
 import os
 
 import requests
+from constants import CATEGORIES
 from transformers import pipeline
 
 config = eval(os.environ["config"])
@@ -8,21 +9,6 @@ HUGGINGFACE_TOKEN = config["huggingface_token"]
 
 NER_MODEL_ID = "dslim/bert-large-NER"
 EMOTION_MODEL_ID = "j-hartmann/emotion-english-distilroberta-base"
-
-CANDIDIATE_LABELS = [
-    "News",
-    "Politics",
-    "Science",
-    "Technology",
-    "Sports",
-    "Movies",
-    "Television",
-    "Entertainment" "Education",
-    "Health",
-    "Music",
-    "Finance",
-    "Miscellaneous",
-]
 
 
 def get_huggingface_response(text, model_id):
@@ -43,7 +29,7 @@ def get_huggingface_response(text, model_id):
 def get_huggingface_zero_shot_classificaiton(sequence_to_classify):
     classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
     try:
-        output = classifier(sequence_to_classify, CANDIDIATE_LABELS)
+        output = classifier(sequence_to_classify, CATEGORIES)
     except Exception:
         print(f"Could not get Huggingface response for Zero Shot Classification")
         return

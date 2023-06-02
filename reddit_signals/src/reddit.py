@@ -111,6 +111,19 @@ def get_submission_data(subreddit, submission):
     else:
         submission_data["location"] = NONE_FILLER
 
+    print("Getting categories for the title...")
+    huggingface_zero_shot_classificaiton = get_huggingface_zero_shot_classificaiton(
+        submission_title
+    )
+    if isinstance(huggingface_zero_shot_classificaiton, dict):
+        title_categories_label = huggingface_zero_shot_classificaiton["labels"][0], 
+        title_categories_score = huggingface_zero_shot_classificaiton["scores"][0]
+        
+        if title_categories_score >= 0.4:
+            submission_data["categories"] = title_categories_label
+        else:
+            submission_data["categories"] = "Miscellaneous"
+
     subreddit_subscribers = subreddit.subscribers
     submission_data["subreddit_subscribers"] = subreddit_subscribers
 
@@ -143,26 +156,23 @@ def process_submission_data(
         else:
             submission_data["title_emotion"] = "neutral"
 
-    print("Getting categories for the title...")
-    huggingface_zero_shot_classificaiton = get_huggingface_zero_shot_classificaiton(
-        submission_title
-    )
-    if isinstance(title_emotion, list):
-        title_categories_label, title_categories_score = (
-            huggingface_zero_shot_classificaiton["labels"][0],
-            huggingface_zero_shot_classificaiton["scores"][0],
-        )
-        if title_categories_score > 0.4:
-            submission_data["categories"] = title_categories_label
-        else:
-            submission_data["categories"] = "Miscellaneous"
-
     print("Going over comments...")
     comment_count = 0
     top_level_comments = get_comments(submission=submission, comment_sort=comment_sort)
     comments_emotion_counter, comments = {}, []
     for top_level_comment in top_level_comments:
         if isinstance(top_level_comment, MoreComments):
+            continue
+
+        # We don't want stickied comments- mostly from Mods
+        if top_level_comment.stickied:
+            print("Found stickied comment; skipping...")
+            continue
+
+        # We don't want comments from bots
+        comment_author = top_level_comment.author.name
+        if "bot" in comment_author.lower():
+            print(f"Found comment from bot {comment_author}; skipping...")
             continue
 
         comment = top_level_comment.body
@@ -177,20 +187,12 @@ def process_submission_data(
 
             comment_emotion_score = comment_emotion[0][0]["score"]
             comment_emotion_score = round(comment_emotion_score, 2)
+            if comment_emotion_score < CLASSIFICATION_THRESHOLD:
+                continue
+
             comments_emotion_counter[comment_emotion_prediction] = (
                 comments_emotion_counter.get(comment_emotion_prediction, 0) + 1
             )
-
-        # We don't want stickied comments- mostly from Mods
-        if top_level_comment.stickied:
-            print("Found stickied comment; skipping...")
-            continue
-
-        # We don't want comments from bots
-        comment_author = top_level_comment.author.name
-        if "bot" in comment_author.lower():
-            print(f"Found comment from bot {comment_author}; skipping...")
-            continue
 
         comments.append(comment)
         comment_count += 1
