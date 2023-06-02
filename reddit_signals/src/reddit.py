@@ -4,9 +4,9 @@ import praw
 from constants import CLASSIFICATION_THRESHOLD, NONE_FILLER
 from huggingface import (
     EMOTION_MODEL_ID,
-    ESG_CATEGORIES_MODEL_ID,
     NER_MODEL_ID,
     get_huggingface_response,
+    get_huggingface_zero_shot_classificaiton,
 )
 from open_ai import get_openai_summary
 from praw.models import MoreComments
@@ -143,15 +143,19 @@ def process_submission_data(
         else:
             submission_data["title_emotion"] = "neutral"
 
-    print("Getting ESG categories for the title...")
-    title_esg_categories = get_huggingface_response(
-        submission_title, ESG_CATEGORIES_MODEL_ID
+    print("Getting categories for the title...")
+    huggingface_zero_shot_classificaiton = get_huggingface_zero_shot_classificaiton(
+        submission_title
     )
-    if isinstance(title_esg_categories, list):
-        title_esg_categories_prediction = title_esg_categories[0][0]["label"]
-        title_esg_categories_score = title_esg_categories[0][0]["score"]
-        if title_esg_categories_score:
-            submission_data["categories"] = title_esg_categories_prediction
+    if isinstance(title_emotion, list):
+        title_categories_label, title_categories_score = (
+            huggingface_zero_shot_classificaiton["labels"][0],
+            huggingface_zero_shot_classificaiton["scores"][0],
+        )
+        if title_categories_score > 0.4:
+            submission_data["categories"] = title_categories_label
+        else:
+            submission_data["categories"] = "Miscellaneous"
 
     print("Going over comments...")
     comment_count = 0
@@ -208,5 +212,5 @@ def process_submission_data(
         submission_data["comments_summary"] = summary
     else:
         submission_data["comments_summary"] = NONE_FILLER
-    
+
     return submission_data
