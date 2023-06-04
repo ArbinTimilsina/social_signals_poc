@@ -66,7 +66,7 @@ def create_dag():
     Format for schedule_interval:
          minute, hour, day_of_month, month_of_year, day_of_week
     """
-    retry_delay_minutes = 1
+    retry_delay_minutes = 3
     retries = 1
     default_args = {
         "owner": "admin",

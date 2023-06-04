@@ -23,13 +23,16 @@ def get_subreddit_data(year, month, day, time, subreddit_name):
             results.append(submission_data)
         if len(results) == SUBMISSION_LIMIT:
             break
+   
     df = pd.DataFrame(results)
     print(f"Shape of the final dataframe is {df.shape}")
 
-    output_path = f"s3://social-signals-dev-data/reddit/year={year}/month={month}/day={day}/time={time}/{subreddit}.csv"
-    print(f"Writing output to {output_path}")
-
-    df.to_csv(output_path, index=False)
+    if df.empty:
+        print("DF is emplty, won't be writing to CSV file...")
+    else:
+        output_path = f"s3://social-signals-dev-data/reddit/year={year}/month={month}/day={day}/time={time}/{subreddit}.csv"
+        print(f"Writing output to {output_path}")
+        df.to_csv(output_path, index=False)
 
 
 def main():

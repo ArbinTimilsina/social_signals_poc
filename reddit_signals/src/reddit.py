@@ -2,11 +2,10 @@ import os
 
 import praw
 from constants import CLASSIFICATION_THRESHOLD, NONE_FILLER
-from huggingface import (
-    EMOTION_MODEL_ID,
-    NER_MODEL_ID,
-    get_huggingface_response,
-    get_huggingface_zero_shot_classificaiton,
+from sagemaker_inference import (
+    get_emotion,
+    get_huggingface_zero_shot_classificaiton_response,
+    get_ner,
 )
 from open_ai import get_openai_summary
 from praw.models import MoreComments
@@ -74,23 +73,20 @@ def get_submission_data(subreddit, submission):
     print(f"Submission title: {submission_title}")
 
     print("Getting entities for the title...")
-    huggingface_entities = get_huggingface_response(submission_title, NER_MODEL_ID)
+    entities = get_ner(submission_title)
     organization, person, location = [], [], []
-    if isinstance(huggingface_entities, list):
-        for entity in huggingface_entities:
+    if isinstance(entities, list):
+        for entity in entities:
             if (
-                entity["entity_group"] == "ORG"
-                and entity["score"] >= CLASSIFICATION_THRESHOLD
+                entity["entity"] == "B-ORG" and entity["score"] >= CLASSIFICATION_THRESHOLD
             ):
                 organization.append(entity["word"])
             if (
-                entity["entity_group"] == "PER"
-                and entity["score"] >= CLASSIFICATION_THRESHOLD
+                entity["entity"] == "B-PER" and entity["score"] >= CLASSIFICATION_THRESHOLD
             ):
                 person.append(entity["word"])
             if (
-                entity["entity_group"] == "LOC"
-                and entity["score"] >= CLASSIFICATION_THRESHOLD
+                entity["entity"] == "B-LOC" and entity["score"] >= CLASSIFICATION_THRESHOLD
             ):
                 location.append(entity["word"])
 
@@ -99,30 +95,32 @@ def get_submission_data(subreddit, submission):
         return
 
     if organization:
-        submission_data["organization"] = ", ".join(organization)
+        submission_data["Organization"] = ", ".join(organization)
     else:
-        submission_data["organization"] = NONE_FILLER
+        submission_data["Organization"] = NONE_FILLER
     if person:
-        submission_data["person"] = ", ".join(person)
+        submission_data["Person"] = ", ".join(person)
     else:
-        submission_data["person"] = NONE_FILLER
+        submission_data["Person"] = NONE_FILLER
     if location:
-        submission_data["location"] = ", ".join(location)
+        submission_data["Location"] = ", ".join(location)
     else:
-        submission_data["location"] = NONE_FILLER
+        submission_data["Location"] = NONE_FILLER
 
-    print("Getting categories for the title...")
-    huggingface_zero_shot_classificaiton = get_huggingface_zero_shot_classificaiton(
-        submission_title
+    print("Getting sub-category for the title...")
+    huggingface_zero_shot_classificaiton = (
+        get_huggingface_zero_shot_classificaiton_response(submission_title)
     )
     if isinstance(huggingface_zero_shot_classificaiton, dict):
-        title_categories_label = huggingface_zero_shot_classificaiton["labels"][0], 
-        title_categories_score = huggingface_zero_shot_classificaiton["scores"][0]
-        
-        if title_categories_score >= 0.4:
-            submission_data["categories"] = title_categories_label
+        title_sub_category_label = huggingface_zero_shot_classificaiton["labels"][0]
+        title_sub_category_score = huggingface_zero_shot_classificaiton["scores"][0]
+
+        if title_sub_category_score >= 0.25:
+            submission_data["sub_category"] = title_sub_category_label
         else:
-            submission_data["categories"] = "Miscellaneous"
+            submission_data["sub_category"] = "Miscellaneous"
+    else:
+        submission_data["sub_category"] = "Miscellaneous"
 
     subreddit_subscribers = subreddit.subscribers
     submission_data["subreddit_subscribers"] = subreddit_subscribers
@@ -147,14 +145,16 @@ def process_submission_data(
     submission_data = {}
 
     print("Getting emotion for the title...")
-    title_emotion = get_huggingface_response(submission_title, EMOTION_MODEL_ID)
+    title_emotion = get_emotion(submission_title)
     if isinstance(title_emotion, list):
-        title_emotion_prediction = title_emotion[0][0]["label"]
-        title_emotion_score = title_emotion[0][0]["score"]
-        if title_emotion_score >= CLASSIFICATION_THRESHOLD:
-            submission_data["title_emotion"] = title_emotion_prediction
-        else:
-            submission_data["title_emotion"] = "neutral"
+        if title_emotion:
+            title_emotion = title_emotion[0]
+            title_emotion_prediction = title_emotion["label"]
+            title_emotion_score = title_emotion["score"]
+            if title_emotion_score >= CLASSIFICATION_THRESHOLD:
+                submission_data["title_emotion"] = title_emotion_prediction
+            else:
+                submission_data["title_emotion"] = "neutral"
 
     print("Going over comments...")
     comment_count = 0
@@ -170,29 +170,32 @@ def process_submission_data(
             continue
 
         # We don't want comments from bots
-        comment_author = top_level_comment.author.name
-        if "bot" in comment_author.lower():
-            print(f"Found comment from bot {comment_author}; skipping...")
-            continue
+        comment_author = top_level_comment.author
+        if comment_author:
+            if "bot" in comment_author.name.lower():
+                print(f"Found comment from bot {comment_author}; skipping...")
+                continue
 
         comment = top_level_comment.body
-        comment_emotion = get_huggingface_response(comment, EMOTION_MODEL_ID)
+        comment_emotion = get_emotion(comment)
 
         if isinstance(comment_emotion, list):
-            comment_emotion_prediction = comment_emotion[0][0]["label"]
+            if comment_emotion:
+                comment_emotion = comment_emotion[0]
+                comment_emotion_prediction = comment_emotion["label"]
 
-            # Neutral is abundant and not interesting
-            if comment_emotion_prediction == "neutral":
-                continue
+                # Neutral is abundant and not interesting
+                if comment_emotion_prediction == "neutral":
+                    continue
 
-            comment_emotion_score = comment_emotion[0][0]["score"]
-            comment_emotion_score = round(comment_emotion_score, 2)
-            if comment_emotion_score < CLASSIFICATION_THRESHOLD:
-                continue
+                comment_emotion_score = comment_emotion["score"]
+                comment_emotion_score = round(comment_emotion_score, 2)
+                if comment_emotion_score < CLASSIFICATION_THRESHOLD:
+                    continue
 
-            comments_emotion_counter[comment_emotion_prediction] = (
-                comments_emotion_counter.get(comment_emotion_prediction, 0) + 1
-            )
+                comments_emotion_counter[comment_emotion_prediction] = (
+                    comments_emotion_counter.get(comment_emotion_prediction, 0) + 1
+                )
 
         comments.append(comment)
         comment_count += 1

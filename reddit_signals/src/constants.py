@@ -17,22 +17,17 @@ TABLE_NAME = "social_signals_poc"
 CLASSIFICATION_THRESHOLD = 0.60
 NONE_FILLER = "0"
 
-# Entities
-ENTITIES = ["organization", "person", "location"]
+# Categories
+CATEGORIES = ["Organization", "Person", "Location"]
 
 # For categories
-CATEGORIES = [
-    "News",
+SUB_CATEGORIES = [
     "Politics",
     "Science",
     "Technology",
     "Sports",
-    "Movies",
-    "Television",
     "Entertainment",
-    "Education",
     "Health",
-    "Music",
     "Finance",
     "Miscellaneous",
 ]

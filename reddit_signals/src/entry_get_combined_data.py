@@ -15,7 +15,14 @@ def get_combined_data(year, month, day, time):
     files = s3.glob(files_location)
     print(f"Processing files {files}")
 
-    dfs = [pd.read_csv(f"s3://{file}") for file in files]
+    dfs = []
+    for file in files:
+        try:
+            df = pd.read_csv(f"s3://{file}")
+        except Exception as e:
+            print(f"Couldn't read file {file} as df due to exception\n{e}")
+        dfs.append(df)
+
     df = pd.concat(dfs, ignore_index=True)
     print(f"Shape of the final dataframe is {df.shape}")
 

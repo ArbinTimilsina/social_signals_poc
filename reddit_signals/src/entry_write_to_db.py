@@ -6,7 +6,7 @@ from constants import (
     CATEGORIES,
     COMMENT_LIMIT,
     COMMENT_SORT,
-    ENTITIES,
+    SUB_CATEGORIES,
     NONE_FILLER,
     SCHEMA,
     TABLE_NAME,
@@ -17,17 +17,23 @@ from tools import get_engine
 
 
 def filter_submission_data(
-    year, month, day, time, df, submission_ids, entity, category, top_n=3
+    year, month, day, time, df, submission_ids, category, sub_category, top_n=3
 ):
-    print(f"Processing entity {entity} and category {category}")
+    print(f"Processing category {category} and sub-category {sub_category}")
 
-    df = df[(df[entity] != NONE_FILLER) & (df["categories"] == category)]
-    print(f"Shape of the df is {df.shape}")
+    df_category = df[
+        (df[category] != NONE_FILLER) & (df["sub_category"] == sub_category)
+    ]
+    print(f"Shape of the df is {df_category.shape}")
 
     submission_data_list = []
     count = 0
-    for _, row in df.iterrows():
+    for _, row in df_category.iterrows():
         submission_id = row["submission_id"]
+        if submission_id in submission_ids:
+            print(f"Found already proccessed id {submission_id}; skipping...")
+            continue
+
         submission_title = row["submission_title"]
         submission_data = process_submission_data(
             submission_id=submission_id,
@@ -35,27 +41,29 @@ def filter_submission_data(
             comment_sort=COMMENT_SORT,
             comment_limit=COMMENT_LIMIT,
         )
+
         comments_summary = submission_data["comments_summary"]
         if comments_summary == NONE_FILLER:
+            print(f"Found none summary {submission_id}; skipping...")
             continue
-        if submission_id in submission_ids:
-            continue
+
         submission_ids.append(submission_id)
 
-        submission_data["bucket"] = entity.capitalize()
         submission_data["year"] = year
         submission_data["month"] = month
         submission_data["day"] = day
         submission_data["time"] = time
         submission_data["title"] = submission_title
+        submission_data["social_signals_rank"] = row["social_signals_rank"]
 
         subreddit_name = row["subreddit_name"]
         submission_data[
             "source"
         ] = f"https://reddit.com/r/{subreddit_name}/{submission_id}"
 
-        entities = row[entity]
-        submission_data["tags"] = entities
+        submission_data["category"] = category
+        submission_data["sub_category"] = sub_category
+        submission_data["tags"] = row[category]
 
         submission_data_list.append(submission_data)
         count += 1
@@ -70,8 +78,8 @@ def get_data_and_write_to_db(year, month, day, time):
     print(f"Shape of the combined df is {df.shape}")
 
     submission_ids = []
-    for entity in ENTITIES:
-        for category in CATEGORIES:
+    for category in CATEGORIES:
+        for sub_category in SUB_CATEGORIES:
             submission_data_list = filter_submission_data(
                 year,
                 month,
@@ -79,25 +87,25 @@ def get_data_and_write_to_db(year, month, day, time):
                 time,
                 df,
                 submission_ids,
-                entity=entity,
                 category=category,
+                sub_category=sub_category,
             )
 
-        for submission_data in submission_data_list:
-            db_df = pd.DataFrame(data=[submission_data])
-            print(f"Writing df of shape {db_df.shape} to the DB")
+            for submission_data in submission_data_list:
+                db_df = pd.DataFrame(data=[submission_data])
+                print(f"Writing df of shape {db_df.shape} to the DB")
 
-            engine = get_engine()
-            connection = create_engine(engine, pool_pre_ping=True)
+                engine = get_engine()
+                connection = create_engine(engine, pool_pre_ping=True)
 
-            db_df.to_sql(
-                name=TABLE_NAME,
-                con=connection,
-                schema=SCHEMA,
-                if_exists="append",
-                index=False,
-                method="multi",
-            )
+                db_df.to_sql(
+                    name=TABLE_NAME,
+                    con=connection,
+                    schema=SCHEMA,
+                    if_exists="append",
+                    index=False,
+                    method="multi",
+                )
 
 
 def main():
