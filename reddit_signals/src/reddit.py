@@ -2,13 +2,9 @@ import os
 
 import praw
 from constants import CLASSIFICATION_THRESHOLD, NONE_FILLER
-from sagemaker_inference import (
-    get_emotion,
-    get_huggingface_zero_shot_classificaiton_response,
-    get_ner,
-)
 from open_ai import get_openai_summary
 from praw.models import MoreComments
+from sagemaker_inference import get_categories, get_emotion, get_ner
 
 config = eval(os.environ["config"])
 REDDIT_ID = config["reddit_id"]
@@ -78,15 +74,18 @@ def get_submission_data(subreddit, submission):
     if isinstance(entities, list):
         for entity in entities:
             if (
-                entity["entity"] == "B-ORG" and entity["score"] >= CLASSIFICATION_THRESHOLD
+                entity["entity_group"] == "ORG"
+                and entity["score"] >= CLASSIFICATION_THRESHOLD
             ):
                 organization.append(entity["word"])
             if (
-                entity["entity"] == "B-PER" and entity["score"] >= CLASSIFICATION_THRESHOLD
+                entity["entity_group"] == "PER"
+                and entity["score"] >= CLASSIFICATION_THRESHOLD
             ):
                 person.append(entity["word"])
             if (
-                entity["entity"] == "B-LOC" and entity["score"] >= CLASSIFICATION_THRESHOLD
+                entity["entity_group"] == "LOC"
+                and entity["score"] >= CLASSIFICATION_THRESHOLD
             ):
                 location.append(entity["word"])
 
@@ -108,12 +107,10 @@ def get_submission_data(subreddit, submission):
         submission_data["Location"] = NONE_FILLER
 
     print("Getting sub-category for the title...")
-    huggingface_zero_shot_classificaiton = (
-        get_huggingface_zero_shot_classificaiton_response(submission_title)
-    )
-    if isinstance(huggingface_zero_shot_classificaiton, dict):
-        title_sub_category_label = huggingface_zero_shot_classificaiton["labels"][0]
-        title_sub_category_score = huggingface_zero_shot_classificaiton["scores"][0]
+    sub_category = get_categories(submission_title)
+    if isinstance(sub_category, dict):
+        title_sub_category_label = sub_category["labels"][0]
+        title_sub_category_score = sub_category["scores"][0]
 
         if title_sub_category_score >= 0.25:
             submission_data["sub_category"] = title_sub_category_label

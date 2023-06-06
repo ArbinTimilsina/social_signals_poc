@@ -1,9 +1,8 @@
 import os
 
 import boto3
-import requests
 import sagemaker
-from constants import CATEGORIES
+from constants import SUB_CATEGORIES
 from sagemaker.huggingface import HuggingFacePredictor
 
 config = eval(os.environ["config"])
@@ -40,15 +39,19 @@ def get_sagemaker_response(payload, endpoint_name):
 
 def get_emotion(text):
     payload = {"inputs": text, "options": {"wait_for_model": True}}
-    endpoint_name = "social-signals-emotion-2023-06-03-05-35-02-830"
+    endpoint_name = "ss-emotion-distilroberta-base-2023-06-06-20-55-21-949"
     output = get_sagemaker_response(payload, endpoint_name)
 
     return output
 
 
 def get_ner(text):
-    payload = {"inputs": text, "options": {"wait_for_model": True}}
-    endpoint_name = "social-signals-ner-2023-06-04-03-05-56-782"
+    payload = {
+        "inputs": text,
+        "parameters": {"aggregation_strategy": "simple"},
+        "options": {"wait_for_model": True},
+    }
+    endpoint_name = "ss-ner-bert-base-2023-06-06-19-36-28-904"
     output = get_sagemaker_response(payload, endpoint_name)
 
     return output
@@ -57,30 +60,10 @@ def get_ner(text):
 def get_categories(text):
     payload = {
         "inputs": text,
-        "parameters": {"candidate_labels": CATEGORIES},
+        "parameters": {"candidate_labels": SUB_CATEGORIES},
         "options": {"wait_for_model": True},
     }
-    endpoint_name = "social-signals-ner-2023-06-04-03-05-56-782"
+    endpoint_name = "ss-catogery-bart-mnli-2023-06-06-22-17-10-558"
     output = get_sagemaker_response(payload, endpoint_name)
 
     return output
-
-
-def get_huggingface_zero_shot_classificaiton_response(text):
-    api_url = f"https://api-inference.huggingface.co/models/{ZERO_SHOT_MODEL_ID}"
-    headers = {"Authorization": f"Bearer {HUGGINGFACE_TOKEN}"}
-
-    payload = {
-        "inputs": text,
-        "parameters": {"candidate_labels": CATEGORIES},
-        "options": {"wait_for_model": True},
-    }
-    response = requests.post(api_url, headers=headers, json=payload)
-
-    if response.ok:
-        response = response.json()
-        return response
-    else:
-        print(f"Could not get Huggingface OK response for {ZERO_SHOT_MODEL_ID}")
-        print(f"Response was {response}")
-        return
