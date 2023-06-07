@@ -1,0 +1,3 @@
+[submodule "reddit_signals/src/common_tools"]
+	path = reddit_signals/src/common_tools
+	url = git@github.com:social-signals/common_tools.git
