@@ -2,18 +2,18 @@ import os
 from datetime import datetime
 
 import pandas as pd
-from constants import (
+from constants import COMMENT_LIMIT, COMMENT_SORT
+from reddit import process_submission_data
+from sqlalchemy import create_engine
+
+from common_tools.constants import (
     CATEGORIES,
-    COMMENT_LIMIT,
-    COMMENT_SORT,
     NONE_FILLER,
     SCHEMA,
     SUB_CATEGORIES,
     TABLE_NAME,
 )
-from reddit import process_submission_data
-from sqlalchemy import create_engine
-from tools import get_engine
+from common_tools.db import get_engine
 
 CONNECTION = create_engine(get_engine(), pool_pre_ping=True)
 

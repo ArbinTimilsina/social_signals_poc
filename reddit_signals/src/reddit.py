@@ -1,10 +1,10 @@
 import os
 
 import praw
-from constants import CLASSIFICATION_THRESHOLD, NONE_FILLER
-from open_ai import get_openai_summary
+from common_tools.constants import CLASSIFICATION_THRESHOLD, NONE_FILLER
+from common_tools.open_ai import get_openai_summary
 from praw.models import MoreComments
-from sagemaker_inference import get_categories, get_emotion, get_ner
+from common_tools.sagemaker_inference import get_categories, get_emotion, get_ner
 
 config = eval(os.environ["config"])
 REDDIT_ID = config["reddit_id"]
