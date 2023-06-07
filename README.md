@@ -1,9 +1,8 @@
-# SocialSignals
-Social Signals
+# POC
+Proof of concept
 
-## Enviroment setup
+## To update submodule
 ```
-conda create -n social-signals-env python=3.8
-conda activate social-signals-env
-pip install -r requirements.txt
+git submodule update --init --recursive
+git submodule update --recursive --remote
 ```
