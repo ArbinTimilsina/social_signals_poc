@@ -6,7 +6,7 @@ from constants import COMMENT_LIMIT, COMMENT_SORT
 from reddit import process_submission_data
 from sqlalchemy import create_engine
 
-from common_tools.constants import (
+from common_tools.common_constants import (
     CATEGORIES,
     NONE_FILLER,
     SCHEMA,

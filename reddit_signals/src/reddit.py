@@ -1,9 +1,10 @@
 import os
 
 import praw
-from common_tools.constants import CLASSIFICATION_THRESHOLD, NONE_FILLER
-from common_tools.open_ai import get_openai_summary
 from praw.models import MoreComments
+
+from common_tools.common_constants import CLASSIFICATION_THRESHOLD, NONE_FILLER
+from common_tools.open_ai import get_openai_summary
 from common_tools.sagemaker_inference import get_categories, get_emotion, get_ner
 
 config = eval(os.environ["config"])
@@ -73,21 +74,26 @@ def get_submission_data(subreddit, submission):
     organization, person, location = [], [], []
     if isinstance(entities, list):
         for entity in entities:
+            # TO DO: Find better fix if word is corrupted due to tokenization
+            word = entity["word"]
             if (
                 entity["entity_group"] == "ORG"
                 and entity["score"] >= CLASSIFICATION_THRESHOLD
             ):
-                organization.append(entity["word"])
+                if "#" not in word and len(word) >= 2:
+                    organization.append(entity["word"])
             if (
                 entity["entity_group"] == "PER"
                 and entity["score"] >= CLASSIFICATION_THRESHOLD
             ):
-                person.append(entity["word"])
+                if "#" not in word and len(word) >= 2:
+                    person.append(entity["word"])
             if (
                 entity["entity_group"] == "LOC"
                 and entity["score"] >= CLASSIFICATION_THRESHOLD
             ):
-                location.append(entity["word"])
+                if "#" not in word and len(word) >= 2:
+                    location.append(entity["word"])
 
     if not (organization + person + location):
         print("Expected entities not found. Quitting...")
