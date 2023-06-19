@@ -12,9 +12,6 @@ dag_id = f"reddit_signals_version_{version}"
 subreddits_info = Variable.get("subreddits_info", deserialize_json=True)
 subreddit_list = subreddits_info["subreddit_list"]
 
-# Secret Huggingface info
-secret_huggingface_info = Variable.get("secret_huggingface_info", deserialize_json=True)
-huggingface_token = secret_huggingface_info["token"]
 
 # Secret OpenAI info
 secret_opeinai_info = Variable.get("secret_opeinai_info", deserialize_json=True)
@@ -46,7 +43,6 @@ ecs_container_name = reddit_signals_ecs["ecs_container_name"]
 def set_config(subreddit):
     config = {
         "subreddit": subreddit,
-        "huggingface_token": huggingface_token,
         "openai_key": openai_key,
         "reddit_id": reddit_id,
         "reddit_secret": reddit_secret,
