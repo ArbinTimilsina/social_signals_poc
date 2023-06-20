@@ -128,11 +128,23 @@ def get_submission_data(subreddit, submission):
     subreddit_subscribers = subreddit.subscribers
     submission_data["subreddit_subscribers"] = subreddit_subscribers
 
-    submission_score = submission.score
-    submission_data["submission_score"] = submission_score
+    # The number of upvotes for the submission
+    submission_up_votes = submission.score
+    submission_data["submission_up_votes_count"] = submission_up_votes
 
+    # The percentage of upvotes from all votes on the submission
+    submission_upvote_ratio = submission.upvote_ratio
+
+    # We will try to estimate the total views for the submission
+    # Let's assume 5% of the people vote
+    # This should be sub-reddit dependent but for now, we will generalize it
+    # Do we want to factor in subreddit_subscribers?
+    submission_all_votes_count = submission_up_votes / submission_upvote_ratio
+    submission_data["submission_views_count"] = 20 * submission_all_votes_count
+
+    # The number of comments on the submission
     submission_num_comments = submission.num_comments
-    submission_data["submission_num_comments"] = submission_num_comments
+    submission_data["submission_comments_count"] = submission_num_comments
 
     return submission_data
 

@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import s3fs
 from constants import COMMENT_WEIGHT, SUBMISSION_WEIGHT
-from sklearn.preprocessing import MinMaxScaler
 
 
 def get_combined_data(year, month, day, time):
@@ -26,24 +25,22 @@ def get_combined_data(year, month, day, time):
     df = pd.concat(dfs, ignore_index=True)
     print(f"Shape of the final dataframe is {df.shape}")
 
-    print("Calculating submission rank")
-    df["submission_rank"] = (
-        df["submission_score"].div(df["subreddit_subscribers"]).replace(np.inf, 0.0)
+    print("Calculating up vote rank")
+    df["up_vote_rank"] = (
+        df["submission_up_votes_count"]
+        .div(df["submission_views_count"])
+        .replace(np.inf, 0.0)
     )
 
     print("Calculating comment rank")
     df["comment_rank"] = (
-        df["submission_num_comments"].div(df["submission_score"]).replace(np.inf, 0.0)
-    )
-
-    print("Performing Min-Max scaling")
-    scaler = MinMaxScaler()
-    df[["submission_rank", "comment_rank"]] = scaler.fit_transform(
-        df[["submission_rank", "comment_rank"]]
+        df["submission_comments_count"]
+        .div(df["submission_views_count"])
+        .replace(np.inf, 0.0)
     )
 
     print("Calculating Social Signals rank")
-    df["social_signals_rank"] = (SUBMISSION_WEIGHT * df["submission_rank"]) + (
+    df["social_signals_rank"] = (SUBMISSION_WEIGHT * df["up_vote_rank"]) + (
         COMMENT_WEIGHT * df["comment_rank"]
     )
 

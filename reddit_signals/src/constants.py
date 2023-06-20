@@ -1,6 +1,6 @@
 # Weights for Social Signals rank
-SUBMISSION_WEIGHT = 0.35
-COMMENT_WEIGHT = 0.65
+SUBMISSION_WEIGHT = 0.25
+COMMENT_WEIGHT = 0.75
 
 # For submission data
 SUBMISSION_TIME_FILTER = "day"

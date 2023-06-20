@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import s3fs
 from constants import COMMENT_WEIGHT, LIKE_WEIGHT
-from sklearn.preprocessing import MinMaxScaler
 
 
 def get_combined_data(year, month, day, time):
@@ -34,12 +33,6 @@ def get_combined_data(year, month, day, time):
     print("Calculating comment rank")
     df["comment_rank"] = (
         df["video_comment_count"].div(df["video_view_count"]).replace(np.inf, 0.0)
-    )
-
-    print("Performing Min-Max scaling")
-    scaler = MinMaxScaler()
-    df[["like_rank", "comment_rank"]] = scaler.fit_transform(
-        df[["like_rank", "comment_rank"]]
     )
 
     print("Calculating Social Signals rank")

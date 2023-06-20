@@ -68,12 +68,12 @@ def create_dag():
         "end_date": None,
     }
 
-    # Run daily at 6 AM, 12 PM, and 6 PM ET
+    # Run daily at 7 AM and 7 PM ET
     return DAG(
         dag_id=dag_id,
         default_args=default_args,
         start_date=datetime(2023, 5, 17, 2, 0, 0),
-        schedule_interval="0 10,16,22 * * *",
+        schedule_interval="0 11,23 * * *",
         catchup=False,
         concurrency=3,
         max_active_runs=1,
