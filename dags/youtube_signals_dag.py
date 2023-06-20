@@ -73,7 +73,7 @@ def create_dag():
         dag_id=dag_id,
         default_args=default_args,
         start_date=datetime(2023, 5, 17, 2, 0, 0),
-        schedule_interval="0 11,23 * * *",
+        schedule_interval="0 10,16,22 * * *",
         catchup=False,
         concurrency=3,
         max_active_runs=1,

@@ -69,6 +69,11 @@ def get_submission_data(subreddit, submission):
     submission_data["submission_title"] = submission_title
     print(f"Submission title: {submission_title}")
 
+    # Don't include live threads
+    if "Live Thread" in submission_title:
+        print(f"Quitting live thread: {submission_title}")
+        return
+    
     print("Getting entities for the title...")
     entities = get_ner(submission_title)
     organization, person, location = [], [], []
