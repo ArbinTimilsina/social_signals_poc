@@ -29,11 +29,11 @@ db_port = secret_db_info["db_port"]
 db_name = secret_db_info["db_name"]
 
 # ECS variables
-reddit_signals_ecs = Variable.get("reddit_signals_ecs", deserialize_json=True)
-cluster = reddit_signals_ecs["cluster"]
-subnets_list = reddit_signals_ecs["subnets_list"]
-task_definition = reddit_signals_ecs["task_definition"]
-ecs_container_name = reddit_signals_ecs["ecs_container_name"]
+youtube_signals_ecs = Variable.get("youtube_signals_ecs", deserialize_json=True)
+cluster = youtube_signals_ecs["cluster"]
+subnets_list = youtube_signals_ecs["subnets_list"]
+task_definition = youtube_signals_ecs["task_definition"]
+ecs_container_name = youtube_signals_ecs["ecs_container_name"]
 
 
 def set_config(video_category):
@@ -113,7 +113,7 @@ def get_ecs_operator(
             },
         },
         dag=dag,
-        awslogs_group="/ecs/social-signals-dev-task-definition"
+        awslogs_group="/ecs/youtube-signals-dev-task-definition"
     )
 
     return task_ecs

@@ -26,9 +26,14 @@ def get_most_popular_videos(video_category_id, max_results=50):
         maxResults=max_results,
     )
 
-    response = request.execute()
-
     videos = []
+
+    try:
+        response = request.execute()
+    except Exception as e:
+        print(f"Couldn't get popular videos due to exception {e}")
+        return videos
+
     for video in response["items"]:
         videos.append(video)
 
@@ -38,18 +43,21 @@ def get_most_popular_videos(video_category_id, max_results=50):
 def get_video_comments(video_id, max_results=100):
     youtube = get_youtube()
 
-    video_response = (
-        youtube.commentThreads()
-        .list(
-            part="snippet", videoId=video_id, order="relevance", maxResults=max_results
-        )
-        .execute()
+    request = youtube.commentThreads().list(
+        part="snippet", videoId=video_id, order="relevance", maxResults=max_results
     )
 
     comments = []
-    for item in video_response["items"]:
-        comment = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
-        comments.append(comment)
+
+    try:
+        response = request.execute()
+    except Exception as e:
+        print(f"Couldn't get comments due to exception {e}")
+        return comments
+
+    for item in response["items"]:
+            comment = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
+            comments.append(comment)
 
     return comments
 
@@ -59,7 +67,7 @@ def get_video_data(video):
 
     video_data["video_id"] = video["id"]
 
-    video_title = video["title"]
+    video_title = video["snippet"]["title"]
     video_data["video_title"] = video_title
     print(f"Video title: {video_title}")
 
@@ -124,7 +132,10 @@ def get_video_data(video):
     video_like_count = video["statistics"]["likeCount"]
     video_data["video_like_count"] = video_like_count
 
-    video_comment_count = video["statistics"]["commentCount"]
+    if "commentCount" in video["statistics"]:
+        video_comment_count = video["statistics"]["commentCount"]
+    else:
+        video_comment_count = 0.0
     video_data["video_comment_count"] = video_comment_count
 
     return video_data

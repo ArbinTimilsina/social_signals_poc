@@ -25,7 +25,7 @@ def get_video_category_data(year, month, day, time, video_category_id):
     if df.empty:
         print("DF is emplty, won't be writing to CSV file...")
     else:
-        output_path = f"s3://social-signals-dev-data/youtube/year={year}/month={month}/day={day}/time={time}/{subreddit}.csv"
+        output_path = f"s3://social-signals-dev-data/youtube/year={year}/month={month}/day={day}/time={time}/{video_category_id}.csv"
         print(f"Writing output to {output_path}")
         df.to_csv(output_path, index=False)
 

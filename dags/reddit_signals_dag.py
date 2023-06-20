@@ -12,7 +12,6 @@ dag_id = f"reddit_signals_version_{version}"
 subreddits_info = Variable.get("subreddits_info", deserialize_json=True)
 subreddit_list = subreddits_info["subreddit_list"]
 
-
 # Secret OpenAI info
 secret_opeinai_info = Variable.get("secret_opeinai_info", deserialize_json=True)
 openai_key = secret_opeinai_info["key"]
@@ -120,7 +119,7 @@ def get_ecs_operator(
             },
         },
         dag=dag,
-        awslogs_group="/ecs/social-signals-dev-task-definition"
+        awslogs_group="/ecs/reddit-signals-dev-task-definition"
     )
 
     return task_ecs
