@@ -67,7 +67,7 @@ def filter_and_write_to_db(
         submission_data["tags"] = row[category]
 
         db_df = pd.DataFrame(data=[submission_data])
-        print(f"Writing item {count} out of {top_n} to the DB")
+        print(f"Writing item {count + 1} out of {top_n} to the DB")
 
         db_df.to_sql(
             name=TABLE_NAME,

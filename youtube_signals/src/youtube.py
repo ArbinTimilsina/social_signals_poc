@@ -56,8 +56,8 @@ def get_video_comments(video_id, max_results=100):
         return comments
 
     for item in response["items"]:
-            comment = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
-            comments.append(comment)
+        comment = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
+        comments.append(comment)
 
     return comments
 
@@ -126,14 +126,22 @@ def get_video_data(video):
     else:
         video_data["sub_category"] = "Miscellaneous"
 
-    video_view_count = video["statistics"]["viewCount"]
+    # Find alternate way to handle this
+    video_statistics = video["statistics"]
+    if "viewCount" in video_statistics:
+        video_view_count = video_statistics["viewCount"]
+    else:
+        video_view_count = 0.0
     video_data["video_view_count"] = video_view_count
 
-    video_like_count = video["statistics"]["likeCount"]
+    if "likeCount" in video_statistics:
+        video_like_count = video_statistics["likeCount"]
+    else:
+        video_like_count = 0.0
     video_data["video_like_count"] = video_like_count
 
-    if "commentCount" in video["statistics"]:
-        video_comment_count = video["statistics"]["commentCount"]
+    if "commentCount" in video_statistics:
+        video_comment_count = video_statistics["commentCount"]
     else:
         video_comment_count = 0.0
     video_data["video_comment_count"] = video_comment_count

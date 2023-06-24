@@ -63,7 +63,7 @@ def filter_and_write_to_db(
         video_data["tags"] = row[category]
 
         db_df = pd.DataFrame(data=[video_data])
-        print(f"Writing item {count} out of {top_n} to the DB")
+        print(f"Writing item {count + 1} out of {top_n} to the DB")
 
         db_df.to_sql(
             name=TABLE_NAME,
@@ -114,7 +114,7 @@ def main():
 
     get_data_and_write_to_db(year, month, day, time)
     print(
-        f"Finished writing Reddit Signals to DB for year {year}, month {month}, day={day}, and time={time}"
+        f"Finished writing Youtube Signals to DB for year {year}, month {month}, day={day}, and time={time}"
     )
 
 

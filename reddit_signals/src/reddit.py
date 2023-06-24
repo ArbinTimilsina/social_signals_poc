@@ -130,9 +130,6 @@ def get_submission_data(subreddit, submission):
     else:
         submission_data["sub_category"] = "Miscellaneous"
 
-    subreddit_subscribers = subreddit.subscribers
-    submission_data["subreddit_subscribers"] = subreddit_subscribers
-
     # The number of upvotes for the submission
     submission_up_votes = submission.score
     submission_data["submission_up_votes_count"] = submission_up_votes
@@ -143,7 +140,6 @@ def get_submission_data(subreddit, submission):
     # We will try to estimate the total views for the submission
     # Let's assume 5% of the people vote
     # This should be sub-reddit dependent but for now, we will generalize it
-    # Do we want to factor in subreddit_subscribers?
     submission_all_votes_count = submission_up_votes / submission_upvote_ratio
     submission_data["submission_views_count"] = 20 * submission_all_votes_count
 
@@ -159,8 +155,6 @@ def process_submission_data(
 ):
     reddit = get_reddit()
     submission = reddit.submission(submission_id)
-
-    assert submission.title == submission_title, "Miss-match in submission title!"
 
     submission_data = {}
 
