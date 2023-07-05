@@ -27,12 +27,16 @@ def get_combined_data(year, month, day, time):
 
     print("Calculating like rank")
     df["like_rank"] = (
-        df["video_like_count"].div(df["video_view_count"]).replace(np.inf, 0.0)
+        df["video_like_count"]
+        .div(df["video_view_count"] * df["total_days"])
+        .replace(np.inf, 0.0)
     )
 
     print("Calculating comment rank")
     df["comment_rank"] = (
-        df["video_comment_count"].div(df["video_view_count"]).replace(np.inf, 0.0)
+        df["video_comment_count"]
+        .div(df["video_view_count"] * df["total_days"])
+        .replace(np.inf, 0.0)
     )
 
     print("Calculating Social Signals rank")

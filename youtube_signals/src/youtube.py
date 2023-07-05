@@ -1,5 +1,5 @@
 import os
-
+from datetime import datetime
 from googleapiclient.discovery import build
 
 from common_tools.common_constants import CLASSIFICATION_THRESHOLD, NONE_FILLER
@@ -125,6 +125,13 @@ def get_video_data(video):
             video_data["sub_category"] = "Miscellaneous"
     else:
         video_data["sub_category"] = "Miscellaneous"
+
+    today = datetime.today()
+    published_date = video["snippet"]["publishedAt"]
+    published_date = datetime.strptime(published_date, "%Y-%m-%dT%H:%M:%SZ")
+    published_date.strftime("%Y-%m-%d")
+    total_days = today - published_date 
+    video_data["total_days"] = int(total_days.days)   
 
     # Find alternate way to handle this
     video_statistics = video["statistics"]
