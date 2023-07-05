@@ -81,7 +81,7 @@ def create_dag():
         start_date=datetime(2023, 5, 17, 2, 0, 0),
         schedule_interval="0 10,16,22 * * *",
         catchup=False,
-        concurrency=3,
+        concurrency=10,
         max_active_runs=1,
     )
 
