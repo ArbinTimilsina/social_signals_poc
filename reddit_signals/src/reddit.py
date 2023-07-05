@@ -4,7 +4,7 @@ import praw
 from praw.models import MoreComments
 
 from common_tools.common_constants import CLASSIFICATION_THRESHOLD, NONE_FILLER
-from common_tools.open_ai import get_openai_summary
+from common_tools.sumy_summary import get_sumy_summary
 from common_tools.sagemaker_inference import get_categories, get_emotion, get_ner
 
 config = eval(os.environ["config"])
@@ -225,9 +225,7 @@ def process_submission_data(
         submission_data["comments_emotion"] = "neutral"
 
     if comments:
-        summary_text = " ".join(comments)
-        summary = get_openai_summary(summary_text)
-
+        summary = get_sumy_summary(comments)
         submission_data["comments_summary"] = summary
     else:
         submission_data["comments_summary"] = NONE_FILLER

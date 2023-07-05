@@ -1,10 +1,11 @@
 import os
 from datetime import datetime
+
 from googleapiclient.discovery import build
 
 from common_tools.common_constants import CLASSIFICATION_THRESHOLD, NONE_FILLER
-from common_tools.open_ai import get_openai_summary
 from common_tools.sagemaker_inference import get_categories, get_emotion, get_ner
+from common_tools.sumy_summary import get_sumy_summary
 
 config = eval(os.environ["config"])
 GOOGLE_API_KEY = config["google_api_key"]
@@ -130,8 +131,8 @@ def get_video_data(video):
     published_date = video["snippet"]["publishedAt"]
     published_date = datetime.strptime(published_date, "%Y-%m-%dT%H:%M:%SZ")
     published_date.strftime("%Y-%m-%d")
-    total_days = today - published_date 
-    video_data["total_days"] = int(total_days.days)   
+    total_days = today - published_date
+    video_data["total_days"] = int(total_days.days)
 
     # Find alternate way to handle this
     video_statistics = video["statistics"]
@@ -210,9 +211,7 @@ def process_video_data(video_id, video_title, comment_limit):
         video_data["comments_emotion"] = "neutral"
 
     if comments:
-        summary_text = " ".join(comments)
-        summary = get_openai_summary(summary_text)
-
+        summary = get_sumy_summary(comments)
         video_data["comments_summary"] = summary
     else:
         video_data["comments_summary"] = NONE_FILLER
