@@ -4,8 +4,8 @@ import praw
 from praw.models import MoreComments
 
 from common_tools.common_constants import CLASSIFICATION_THRESHOLD, NONE_FILLER
-from common_tools.sumy_summary import get_sumy_summary
 from common_tools.sagemaker_inference import get_categories, get_emotion, get_ner
+from common_tools.sumy_summary import get_sumy_summary
 
 config = eval(os.environ["config"])
 REDDIT_ID = config["reddit_id"]
@@ -73,7 +73,7 @@ def get_submission_data(subreddit, submission):
     if "Live Thread" in submission_title:
         print(f"Quitting live thread: {submission_title}")
         return
-    
+
     print("Getting entities for the title...")
     entities = get_ner(submission_title)
     organization, person, location = [], [], []

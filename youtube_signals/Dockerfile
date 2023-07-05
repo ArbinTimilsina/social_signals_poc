@@ -9,4 +9,5 @@ ADD . /src
 ADD ./src /src
 WORKDIR /src
 RUN pip install -r requirements.txt
+RUN python -c "import nltk; nltk.download('punkt')"
 ENTRYPOINT [ "python3" ]
